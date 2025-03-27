@@ -80,7 +80,7 @@ To use your dataset, follow these steps:
    - Example:
      ```
      dataset/
-     ├── CIFAR100/
+     ├── dataset_name/
      │   ├── task_0/
      │   │   ├── train/
      │   │   │   ├── 0.npz
