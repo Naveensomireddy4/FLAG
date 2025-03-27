@@ -61,42 +61,21 @@ python3 main.py -data CIFAR100 -m resnet18 -algo FedAvg -gr 99 -did 0 -nc 3 -nb 
 | `-nc 3` | Number of clients (ensure it matches the dataset's clients count). |
 | `-nb 20` | Number of classes in single task (ensure it matches the dataset's class count). |
 | `-lbs 20` | Batch size |
-| `-ls 2` | Local Epoch |
+| `ls 2` | Local Epoch |
 | `-tasks 5` | Number of tasks |
-| `-ppe 30` | Patterns per Experience to get saved in episodic memory  |
-| `-ss 30` | Sample size to be loaded from episodic memory |
+| `ppe 30` | Patterns per Experience to get saved in episodic memory  |
+| `ss 30` | Sample size to be loaded from episodic memory |
 
-## 📂 **Dataset Preparation**
+## 📌 **Dataset Preparation**
+- Place your dataset by creating a `dataset` folder.
+- Inside `dataset`, create subfolders for each dataset (e.g., `CIFAR100`, `CIFAR10`, `BloodMNIST`, etc.).
+- Each dataset folder should contain task folders like `task_0`, `task_1`, etc.
+- Each task folder should contain `train` and `test` subfolders, which should contain respective client data in `.npz` format (e.g., `0.npz`, `1.npz`, `2.npz`, etc.).
 
-To use your dataset, follow these steps:
+### **Disclaimer**
+- The `.npz` files **must** contain data in `(x, y)` format, where `x` represents images and `y` represents labels.
+- None of the `.npz` files should be empty.
+- Ensure that your partitions follow the required structure to avoid any issues in training.
 
-1. **Create a `dataset` folder** in the project directory.
-2. Inside `dataset`, create separate dataset folders such as `CIFAR100`, `CIFAR10`, etc.
-3. Each dataset folder should contain task folders such as `task_0`, `task_1`, etc.
-4. Each `task_x` folder should contain two subfolders:
-   - `train/` - Stores training data for respective clients.
-   - `test/` - Stores testing data for respective clients.
-5. Inside `train/` and `test/`, each client's data should be stored in **.npz** format:
-   - Example:
-     ```
-     dataset/
-     ├── dataset_name/
-     │   ├── task_0/
-     │   │   ├── train/
-     │   │   │   ├── 0.npz
-     │   │   │   ├── 1.npz
-     │   │   │   ├── 2.npz
-     │   │   │   └── ...
-     │   │   ├── test/
-     │   │   │   ├── 0.npz
-     │   │   │   ├── 1.npz
-     │   │   │   ├── 2.npz
-     │   │   │   └── ...
-     ├── CIFAR10/
-     │   ├── task_0/
-     │   ├── task_1/
-     │   └── ...
-     ```
-
-Ensure that the dataset structure follows this format for proper data loading during training.
+If your data is in image and label format, you can use `dataset_reshape.py` to process and convert it into the required `(x, y)` structure.
 
