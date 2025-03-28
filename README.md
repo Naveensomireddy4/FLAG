@@ -49,6 +49,7 @@ cd system
 ```sh
 python3 main.py -data CIFAR100 -m resnet18 -algo FedAvg -gr 99 -did 0 -nc 3 -nb 20 -lbs 20 -ls 2 -tasks 5 -ppe 30 -ss 30
 ```
+Make sure that every time you start the script you don't have any episodic memory
 
 ## ⚙ **Command Parameters**
 | Parameter | Description |
