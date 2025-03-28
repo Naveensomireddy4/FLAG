@@ -79,3 +79,9 @@ python3 main.py -data CIFAR100 -m resnet18 -algo FedAvg -gr 99 -did 0 -nc 3 -nb 
 
 If your data is in image and label format, you can use `dataset_reshape.py` to process and convert it into the required `(x, y)` structure.
 
+## 🆕 **Adding a New Model**
+If you want to add a new model:
+1. Add the model implementation inside `system/flcore/trainmodel`.
+2. Ensure that in the forward pass, the model takes `task_id` along with the input image.
+3. Import your model in `system/main.py` and add it there.
+
