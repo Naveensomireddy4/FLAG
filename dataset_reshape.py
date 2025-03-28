@@ -1,7 +1,7 @@
 import numpy as np
 import os
 # Define the folder containing the `.npz` files
-source_folder = r"C:\Users\navee\IIIT-DELHI\PFLlib3\dataset\CIFAR10\task_0\train"
+source_folder ="Your folder which contains .npz files(ex: cifar100/task1/test)"
 
 # Loop through all files in the folder
 for file_name in os.listdir(source_folder):
