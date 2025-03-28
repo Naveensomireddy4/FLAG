@@ -13,7 +13,7 @@ def load_cifar_from_torchvision():
     print("CIFAR-10 dataset loaded successfully.")
     return train_dataset, test_dataset
 
-def split_dataset_into_tasks(dataset, classes_per_task=20):
+def split_dataset_into_tasks(dataset, classes_per_task=2):
     print(f"Splitting dataset into tasks with {classes_per_task} classes per task.")
     labels = np.array(dataset.targets)
     num_classes = len(np.unique(labels))
@@ -24,7 +24,6 @@ def split_dataset_into_tasks(dataset, classes_per_task=20):
         tasks.append({"classes": task_classes, "indices": task_indices})
     print(f"Dataset split into {len(tasks)} tasks.")
     
-    # Print classes for each task
     for task_id, task in enumerate(tasks):
         print(f"Task {task_id} is getting data from classes: {task['classes']}")
     
@@ -41,12 +40,9 @@ def distribute_data(tasks, num_clients, alpha, dataset, data_type="train"):
         task_indices = task["indices"]
         np.random.shuffle(task_indices)
         
-        # Generate Dirichlet distribution for each class
         dirichlet_distribution = np.random.dirichlet(alpha * np.ones(num_clients), len(task_classes))
-        
-        # Ensure no client gets zero data by adding a small epsilon to the distribution
-        dirichlet_distribution = np.maximum(dirichlet_distribution, 1e-5)  # Avoid zero probabilities
-        dirichlet_distribution /= dirichlet_distribution.sum(axis=1, keepdims=True)  # Renormalize
+        dirichlet_distribution = np.maximum(dirichlet_distribution, 1e-5)
+        dirichlet_distribution /= dirichlet_distribution.sum(axis=1, keepdims=True)
         
         client_splits = {i: [] for i in range(num_clients)}
         
@@ -54,74 +50,106 @@ def distribute_data(tasks, num_clients, alpha, dataset, data_type="train"):
             class_indices = np.where(targets == class_label)[0].tolist()
             proportions = dirichlet_distribution[class_idx]
             
-            # Calculate cumulative proportions and split indices
-            cum_proportions = np.cumsum(proportions)
-            split_indices = np.array_split(class_indices, (cum_proportions[:-1] * len(class_indices)).astype(int))
+            num_samples = len(class_indices)
+            min_samples_per_client = 1
+            client_samples = []
             
-            # Assign data to clients
-            for client_id, split in enumerate(split_indices):
-                client_splits[client_id].extend(split)
+            remaining_samples = num_samples - (min_samples_per_client * num_clients)
+            if remaining_samples < 0:
+                for i in range(num_samples):
+                    client_samples.append(1)
+                for i in range(num_samples, num_clients):
+                    client_samples.append(0)
+            else:
+                client_samples = [min_samples_per_client for _ in range(num_clients)]
+                if remaining_samples > 0:
+                    remaining_dist = np.random.dirichlet(alpha * np.ones(num_clients))
+                    remaining_alloc = (remaining_dist * remaining_samples).astype(int)
+                    client_samples = [client_samples[i] + remaining_alloc[i] for i in range(num_clients)]
+            
+            while sum(client_samples) > num_samples:
+                max_client = np.argmax(client_samples)
+                if client_samples[max_client] > min_samples_per_client:
+                    client_samples[max_client] -= 1
+            
+            np.random.shuffle(class_indices)
+            ptr = 0
+            for client_id in range(num_clients):
+                num = client_samples[client_id]
+                if num > 0:
+                    client_splits[client_id].extend(class_indices[ptr:ptr+num])
+                    ptr += num
         
-        # Assign data to clients and update label distribution
         for client_id, indices in client_splits.items():
             client_data[client_id].extend(indices)
             for idx in indices:
                 label_distribution[client_id][targets[idx]] += 1
     
-    # Print distribution for debugging
     for client_id, dist in label_distribution.items():
-        print(f"Client {client_id} data distribution: {sum(dist.values())} samples")
+        total_samples = sum(dist.values())
+        class_dist = {k: v for k, v in dist.items() if v > 0}
+        print(f"Client {client_id}: {total_samples} total samples, classes: {class_dist}")
     print(f"{data_type.capitalize()} data distribution completed.")
     return client_data, label_distribution
+
 def save_dataset_structure(task_id, train_client_data, test_client_data, train_dataset, test_dataset, output_dir, alpha):
     task_folder = os.path.join(output_dir, f"task_{task_id}")
     os.makedirs(task_folder, exist_ok=True)
     
-    # Create subfolders for train and test data
     train_folder = os.path.join(task_folder, "train")
     test_folder = os.path.join(task_folder, "test")
     os.makedirs(train_folder, exist_ok=True)
     os.makedirs(test_folder, exist_ok=True)
     
-    # Initialize task configuration
     task_config = {
         "task_id": task_id,
         "num_classes": len(set(train_dataset.targets)),
         "alpha": alpha,
-        "classes": tasks[task_id]["classes"],  # Add classes for this task
+        "classes": tasks[task_id]["classes"],
         "train_data": {},
         "test_data": {}
     }
     
-    # Save train data and update config
+    # Save train data in FLAG-compatible format
     for client_id, indices in train_client_data.items():
         images, labels = [], []
         for idx in indices:
             img, label = train_dataset[idx]
             images.append(img.numpy())
             labels.append(label)
-        np.savez(os.path.join(train_folder, f"{client_id}.npz"), images=np.array(images), labels=np.array(labels))
+        
+        # Create dictionary with 'x' and 'y' keys and wrap in 'data' key
+        client_data = {
+            "x": np.array(images),
+            "y": np.array(labels)
+        }
+        np.savez(os.path.join(train_folder, f"{client_id}.npz"), data=client_data)
         task_config["train_data"][f"{client_id}"] = len(indices)
     
-    # Save test data and update config
+    # Save test data in FLAG-compatible format
     for client_id, indices in test_client_data.items():
         images, labels = [], []
         for idx in indices:
             img, label = test_dataset[idx]
             images.append(img.numpy())
             labels.append(label)
-        np.savez(os.path.join(test_folder, f"{client_id}.npz"), images=np.array(images), labels=np.array(labels))
+        
+        client_data = {
+            "x": np.array(images),
+            "y": np.array(labels)
+        }
+        np.savez(os.path.join(test_folder, f"{client_id}.npz"), data=client_data)
         task_config["test_data"][f"{client_id}"] = len(indices)
     
-    # Save the config file
     with open(os.path.join(task_folder, "config.json"), "w") as f:
         json.dump(task_config, f, indent=4)
     print(f"Task {task_id} dataset saved with config file.")
+
 if __name__ == "__main__":
     output_dir = "./dataset/CIFAR10"
     num_clients = 3
     classes_per_task = 2
-    alpha = 0.1  # Adjusted alpha for better distribution
+    alpha = 0.1
     train_dataset, test_dataset = load_cifar_from_torchvision()
     tasks = split_dataset_into_tasks(train_dataset, classes_per_task)
     
