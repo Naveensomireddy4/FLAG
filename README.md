@@ -79,6 +79,8 @@ python3 main.py -data CIFAR100 -m resnet18 -algo FedAvg -gr 99 -did 0 -nc 3 -nb 
 
 If your data is in image and label format, you can use `dataset_reshape.py` to process and convert it into the required `(x, y)` structure.
 
+You can use data_generation.py, which generates cifar10 dataset for reference purpose.You can alter it for generating other datasets
+
 ## 🆕 **Adding a New Model**
 If you want to add a new model:
 1. Add the model implementation inside `system/flcore/trainmodel`.
