@@ -47,7 +47,7 @@ cd system
 
 ### **2. Run the Training Script**
 ```sh
-python3 main.py -data CIFAR100 -m resnet18 -algo FedAvg -gr 99 -did 0 -nc 3 -nb 20 -lbs 20 -ls 2 -tasks 5 -ppe 30 -ss 30
+python3 main.py -data CIFAR100 -m resnet18 -algo FedAvg -gr 99 -did 0 -nc 3 -nb 20 -lbs 20 -ls 2 -tasks 5 -ppe 30 -ss 30 -alpha 0.1
 ```
 ### **Disclaimer**
 - Make sure that every time you start the script you don't have any episodic memory
@@ -55,7 +55,7 @@ python3 main.py -data CIFAR100 -m resnet18 -algo FedAvg -gr 99 -did 0 -nc 3 -nb 
 ## ⚙ **Command Parameters**
 | Parameter | Description |
 |-----------|-------------|
-| `-data CIFAR100` | Uses **BloodMNIST** dataset from MedMNIST. |
+| `-data CIFAR100` | Uses **CIFAR100** dataset from MedMNIST. |
 | `-m resnet18` | Uses **ResNet-18** as the model architecture. |
 | `-algo FedAvg` | Runs the **Federated Averaging (FedAvg)** algorithm. |
 | `-gr 99` | Sets **50** global communication rounds. |
@@ -68,11 +68,6 @@ python3 main.py -data CIFAR100 -m resnet18 -algo FedAvg -gr 99 -did 0 -nc 3 -nb 
 | `ppe 30` | Patterns per Experience to get saved in episodic memory  |
 | `ss 30` | Sample size to be loaded from episodic memory |
 
-## 📌 **Dataset Preparation**
-- Place your dataset by creating a `dataset` folder.
-- Inside `dataset`, create subfolders for each dataset (e.g., `CIFAR100`, `CIFAR10`, `BloodMNIST`, etc.).
-- Each dataset folder should contain task folders like `task_0`, `task_1`, etc.
-- Each task folder should contain `train` and `test` subfolders, which should contain respective client data in `.npz` format (e.g., `0.npz`, `1.npz`, `2.npz`, etc.).
 
 ### **Disclaimer**
 - The `.npz` files **must** contain data in `(x, y)` format, where `x` represents images and `y` represents labels.
