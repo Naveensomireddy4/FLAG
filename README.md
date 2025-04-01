@@ -67,7 +67,7 @@ python3 main.py -data CIFAR100 -m resnet18 -algo FedAvg -gr 99 -did 0 -nc 3 -nb 
 | `-tasks 5` | Number of tasks |
 | `ppe 30` | Patterns per Experience to get saved in episodic memory  |
 | `ss 30` | Sample size to be loaded from episodic memory |
-
+| `alpha 0.1` | Alpha value for dirchlet distribution|
 
 ### **Disclaimer**
 - The `.npz` files **must** contain data in `(x, y)` format, where `x` represents images and `y` represents labels.
